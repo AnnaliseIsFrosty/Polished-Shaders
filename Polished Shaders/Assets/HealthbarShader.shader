@@ -45,6 +45,13 @@ Shader "Custom/HealthbarShader"
                 return output * (x <= flashLength);
             }
 
+            // Code based off pseudo-code by Inigo Quilez
+            // https://www.youtube.com/watch?v=62-pRVZuS5c
+            float RectangleSDF(float2 pos, float2 halfDimensions)
+            {
+                return length(max(abs(pos) - halfDimensions, 0));
+            }
+
             struct Attributes
             {
                 float4 positionOS : POSITION;
@@ -82,6 +89,13 @@ Shader "Custom/HealthbarShader"
                 bool healthMask = (_Health > IN.uv.x);
                 lerpedColor.xyz *= healthMask;
                 lerpedColor.a = healthMask + 0.5 * !healthMask;
+
+                // Outline
+                float2 sdfUVs = float2(IN.uv.x * 8, IN.uv.y) * 2 - float2(8, 1);
+                float distanceFromRect = RectangleSDF(sdfUVs, float2(7.7, 0.7));
+                float outlineMask = distanceFromRect < 0.05;
+                lerpedColor.xyz *= outlineMask;
+                lerpedColor.a += 0.5 * distanceFromRect >= 0.02;
 
                 return lerpedColor;
             }

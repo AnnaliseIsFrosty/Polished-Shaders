@@ -35,6 +35,6 @@ Material:
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _EmptyColor: {r: 1, g: 0, b: 0, a: 1}
-    - _FullColor: {r: 0, g: 1, b: 0, a: 1}
+    - _FullColor: {r: 0.3530382, g: 1, b: 0, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
