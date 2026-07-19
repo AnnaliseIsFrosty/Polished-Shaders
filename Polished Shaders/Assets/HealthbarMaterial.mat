@@ -31,8 +31,8 @@ Material:
     m_Floats:
     - _Health: 1
     - _LowerThreshold: 0.2
-    - _OutlineThickness: 0.524
-    - _RoundingIntensity: 3.85
+    - _OutlineThickness: 0.19
+    - _RoundingIntensity: 2.13
     - _UpperThreshold: 0.8
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}

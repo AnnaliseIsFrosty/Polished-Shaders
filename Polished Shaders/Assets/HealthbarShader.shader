@@ -55,6 +55,22 @@ Shader "Custom/HealthbarShader"
                 return length(max(abs(pos) - halfDimensions, 0));
             }
 
+            // Code sourced from Inigo Quilez
+            // https://www.shadertoy.com/view/4llXD7
+            // b.x = half width
+            // b.y = half height
+            // r.x = roundness top-right  
+            // r.y = roundness boottom-right
+            // r.z = roundness top-left
+            // r.w = roundness bottom-left
+            float sdRoundBox( float2 p, float2 b, float4 r ) 
+            {
+                r.xy = (p.x>0.0)?r.xy : r.zw;
+                r.x  = (p.y>0.0)?r.x  : r.y;
+                float2 q = abs(p)-b+r.x;
+                return min(max(q.x,q.y),0.0) + length(max(q,0.0)) - r.x;
+            }
+
             struct Attributes
             {
                 float4 positionOS : POSITION;
@@ -95,17 +111,19 @@ Shader "Custom/HealthbarShader"
 
                 // Outline
                 float2 sdfUVs = float2(IN.uv.x * 8, IN.uv.y) * 2 - float2(8, 1);
-                float distanceFromRect = RectangleSDF(sdfUVs, float2(8 - _OutlineThickness * _RoundingIntensity - _OutlineThickness, 1 - _OutlineThickness * _RoundingIntensity - _OutlineThickness));
-                float outlineMask = (distanceFromRect - _OutlineThickness * _RoundingIntensity) <= 0.0;
+                float distanceFromRect = RectangleSDF(sdfUVs, float2(8 , 1) - _RoundingIntensity - _OutlineThickness);
+                float outlineMask = (distanceFromRect - _RoundingIntensity) <= 0.0;
                 lerpedColor.xyz *= outlineMask;
                 lerpedColor.a += 0.5 * !outlineMask;
 
-                float distanceFromRounding = RectangleSDF(sdfUVs, float2(8 - _OutlineThickness * _RoundingIntensity, 1 - _OutlineThickness * _RoundingIntensity));
-                float roundingMask = (distanceFromRounding - _OutlineThickness * _RoundingIntensity) <= 0.0;
-                lerpedColor.a -= lerpedColor.a * !roundingMask;
+                float distanceFromRounding = sdRoundBox(sdfUVs, float2(8 , 1) - _OutlineThickness, float4(_RoundingIntensity.xxxx));
+                float roundingMask = distanceFromRounding <= _OutlineThickness;
+                if (_RoundingIntensity) {lerpedColor.a -= lerpedColor.a * !roundingMask;}
+                
                 
                 return lerpedColor;
-                return float4(outlineMask.xxx, 1) + float4(!roundingMask.x, 0, 0, 1);
+                return float4(roundingMask.xxx, 1);
+                return float4(distanceFromRect.xxx, 1);
             }
             ENDHLSL
         }
