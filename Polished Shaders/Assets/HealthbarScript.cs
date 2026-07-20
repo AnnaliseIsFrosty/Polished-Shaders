@@ -17,11 +17,11 @@ public class HealthbarScript : MonoBehaviour
         //print("IS DAMAGED = " + _HealthbarMaterial.GetFloat("_IsDamaged"));
         print("Crack Start = " + _HealthbarMaterial.GetFloat("_CrackStart"));
 
-        if (_HealthbarMaterial.GetFloat("_IsDamaged") > 0)
-        {
-            print("DAMAGED!!!");
-            _HealthbarMaterial.SetFloat("_IsDamaged", 0);
-        }
+        //if (_HealthbarMaterial.GetFloat("_IsDamaged") > 0)
+        //{
+        //    print("DAMAGED!!!");
+        //    _HealthbarMaterial.SetFloat("_IsDamaged", 0);
+        //}
 
         if (Input.GetKeyDown(KeyCode.Space))
         {

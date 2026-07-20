@@ -14,7 +14,6 @@ Shader "Custom/HealthbarShader"
         _FlashStrength("Flash Strength", Range(0, 1)) = 0.5
         _CrackLength("Crack Length", Range(0, 1)) = 0.2
         _CrackStrength("Crack Strength", Range(0, 1)) = 0.5
-        [MaterialToggle] _IsDamaged("Is Damaged", Float) = 0
         _CrackStart("Crack Start", Float) = 0
     }
 
@@ -40,7 +39,6 @@ Shader "Custom/HealthbarShader"
             float4 _FlashColor;
             float _FlashLength, _FlashStrength;
             float _CrackLength, _CrackStrength, _CrackStart;
-            bool _IsDamaged;
 
             // Code sourced from Freya Holmer
             //https://www.youtube.com/watch?v=kfM-yu0iQBk&t=6927s
@@ -140,6 +138,7 @@ Shader "Custom/HealthbarShader"
                     lerpedColor.xyz += clamp(flash.xyz, 0, 1);
                 }
 
+                // Flash when Damaged
                 if (_CrackStart > 0) 
                 {
                     if (_Time.y - _CrackStart < _CrackLength) 
