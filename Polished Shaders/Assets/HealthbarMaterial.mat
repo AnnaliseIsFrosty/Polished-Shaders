@@ -29,14 +29,15 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _CrackLength: 0.2
-    - _CrackStrength: 0.5
+    - _CrackLength: 1
+    - _CrackStart: 0
+    - _CrackStrength: 0.15
     - _FlashLength: 0.4
     - _FlashStrength: 0.465
     - _Health: 1
     - _IsDamaged: 0
     - _LowerThreshold: 0.2
-    - _OutlineThickness: 0
+    - _OutlineThickness: 0.18
     - _RoundingIntensity: 0.5
     - _UpperThreshold: 0.8
     m_Colors:

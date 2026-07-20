@@ -27,6 +27,11 @@ public class HealthbarScript : MonoBehaviour
         {
             _HealthbarMaterial.SetFloat("_IsDamaged", 1);
             _HealthbarMaterial.SetFloat("_CrackStart", Time.time);
+            _HealthbarMaterial.SetFloat("_Health", (_HealthbarMaterial.GetFloat("_Health") - Random.Range(0.05f, 0.2f)));
+            if (_HealthbarMaterial.GetFloat("_Health") <= 0)
+            {
+                _HealthbarMaterial.SetFloat("_Health", 1);
+            }
         }
     }
 }

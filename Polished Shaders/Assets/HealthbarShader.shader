@@ -140,16 +140,12 @@ Shader "Custom/HealthbarShader"
                     lerpedColor.xyz += clamp(flash.xyz, 0, 1);
                 }
 
-                if (_IsDamaged) {
-                    _CrackStart = _Time.y;
-                }
-
                 if (_CrackStart > 0) 
                 {
                     if (_Time.y - _CrackStart < _CrackLength) 
                     {
-                        float3 crack = lerp(lerpedColor.xyz, float3(1, 1, 1), CubicPulse(frac(_Time.y - _CrackStart), 0.5, _CrackLength) * _CrackStrength);
-                        lerpedColor.xyz += crack; 
+                        float3 crack = lerp(lerpedColor.xyz, float3(1, 1, 1), CubicPulse(frac(_Time.y - _CrackStart), 0, _CrackLength) * _CrackStrength);
+                        lerpedColor.xyz += crack * CubicPulse(frac(_Time.y - _CrackStart), 0, _CrackLength) * _CrackStrength; 
                     }
                 }
 
