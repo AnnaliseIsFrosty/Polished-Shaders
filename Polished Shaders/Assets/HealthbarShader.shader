@@ -9,6 +9,10 @@ Shader "Custom/HealthbarShader"
         _Health("Health", Range(0,1)) = 1
         _OutlineThickness("Outline Thickness", Range(0, 1)) = 0.2
         _RoundingIntensity("Rounding Intensity", Range(0, 10)) = 0
+        _FlashColor("Flash Color", Color) = (1, 0, 0, 1)
+        _FlashLength("Flash Length", Range(0, 1)) = 0.4
+        _FlashStrength("Flash Strength", Range(0, 1)) = 0.5
+
     }
 
     SubShader
@@ -30,6 +34,8 @@ Shader "Custom/HealthbarShader"
             float _Health;
             float _UpperThreshold, _LowerThreshold;
             float _OutlineThickness, _RoundingIntensity;
+            float4 _FlashColor;
+            float _FlashLength, _FlashStrength;
 
             // Code sourced from Freya Holmer
             //https://www.youtube.com/watch?v=kfM-yu0iQBk&t=6927s
@@ -107,23 +113,32 @@ Shader "Custom/HealthbarShader"
                 // Transparency
                 bool healthMask = (_Health > IN.uv.x);
                 lerpedColor.xyz *= healthMask;
-                lerpedColor.a = healthMask + 0.5 * !healthMask;
+                lerpedColor.a = clamp(healthMask + 0.5 * !healthMask, 0, 1);
 
                 // Outline
                 float2 sdfUVs = float2(IN.uv.x * 8, IN.uv.y) * 2 - float2(8, 1);
                 float distanceFromRect = RectangleSDF(sdfUVs, float2(8 , 1) - _RoundingIntensity - _OutlineThickness);
-                float outlineMask = (distanceFromRect - _RoundingIntensity) <= 0.0;
+                bool outlineMask = (distanceFromRect - _RoundingIntensity) <= 0.0;
                 lerpedColor.xyz *= outlineMask;
-                lerpedColor.a += 0.5 * !outlineMask;
+                lerpedColor.a = clamp(lerpedColor.a + 0.5 * !outlineMask, 0, 1); // If a pixel is in the outline we make it opaque again
 
+                // Clipping out the corners when rounded
                 float distanceFromRounding = sdRoundBox(sdfUVs, float2(8 , 1) - _OutlineThickness, float4(_RoundingIntensity.xxxx));
-                float roundingMask = distanceFromRounding <= _OutlineThickness;
-                if (_RoundingIntensity) {lerpedColor.a -= lerpedColor.a * !roundingMask;}
+                bool roundingMask = distanceFromRounding <= _OutlineThickness;
+                if (_RoundingIntensity) {lerpedColor.a = clamp(lerpedColor.a - lerpedColor.a * !roundingMask, 0, 1);} // We only want the rounding to apply if rounding intensity is above 0
                 
-                
+                // Flashing
+                if (_Health <= _LowerThreshold) 
+                {
+                    float3 flash = lerp(lerpedColor.xyz, _FlashColor.xyz, CubicPulse(frac(_Time.y), 0.5, _FlashLength) * _FlashStrength); // Blends to flash color based off current intensity of the flash    
+                    lerpedColor.xyz *= flash;
+                    lerpedColor.xyz += clamp(flash.xyz, 0, 1);
+                }
+
+
                 return lerpedColor;
-                return float4(roundingMask.xxx, 1);
-                return float4(distanceFromRect.xxx, 1);
+                //return float4(CubicPulse(frac(_Time.y), 0.5, _FlashLength) * _FlashStrength.xxx, 1);
+                // return float4(distanceFromRect.xxx, 1);
             }
             ENDHLSL
         }
