@@ -35,13 +35,13 @@ Material:
     - _FlashLength: 0.2
     - _FlashStrength: 0.465
     - _Health: 1
-    - _HealthLerpSpeed: 2
+    - _HealthLerpSpeed: 3
     - _IsDamaged: 0
     - _LerpedHealth: 1
     - _LowerThreshold: 0.2
-    - _OutlineThickness: 0.43
+    - _OutlineThickness: 0.25
     - _PreviousHealth: 1
-    - _RoundingIntensity: 2.5
+    - _RoundingIntensity: 0
     - _UpperThreshold: 0.8
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}

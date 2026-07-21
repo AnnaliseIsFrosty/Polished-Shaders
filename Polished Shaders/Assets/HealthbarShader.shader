@@ -2,16 +2,19 @@ Shader "Custom/HealthbarShader"
 {
     Properties
     {
-        [MainColor] _FullColor("Full Color", Color) = (0, 1, 0, 1)
-        [MainColor] _EmptyColor("Empty Color", Color) = (1, 0, 0, 1)
+        _Health("Health", Range(0,1)) = 1
+        _FullColor("Full Color", Color) = (0, 1, 0, 1)
+        _EmptyColor("Empty Color", Color) = (1, 0, 0, 1)
         _LowerThreshold("Lower Threshold", Range(0, 1)) = 0.2
         _UpperThreshold("Upper Threshold", Range(0, 1)) = 0.8
-        _Health("Health", Range(0,1)) = 1
+        
         _OutlineThickness("Outline Thickness", Range(0, 1)) = 0.2
         _RoundingIntensity("Rounding Intensity", Range(0, 10)) = 0
+        
         _FlashColor("Flash Color", Color) = (1, 0, 0, 1)
         _FlashLength("Flash Length", Range(0, 1)) = 0.4
         _FlashStrength("Flash Strength", Range(0, 1)) = 0.5
+        
         _CrackLength("Crack Length", Range(0, 1)) = 0.2
         _CrackStrength("Crack Strength", Range(0, 1)) = 0.5
         _HealthLerpSpeed("Health Lerp Speed", Range(0.5, 5)) = 3
@@ -54,7 +57,7 @@ Shader "Custom/HealthbarShader"
             // https://iquilezles.org/articles/functions/
             float CubicPulse(float x, float flashLocation, float flashLength) 
             {
-                x = abs(x - flashLocation); // distance from current x to the flash location
+                x = abs(x - flashLocation);                         // distance from current x to the flash location
                 float output = x / flashLength;
                 output = 1 - output * output * (3 - 2 * output);
                 return output * (x <= flashLength);
@@ -67,9 +70,9 @@ Shader "Custom/HealthbarShader"
                 return 2 * sqrt(falloff) * x / (1 + falloff * x * x);    
             }
 
-            // Code based off pseudo-code by Inigo Quilez
+            // Code sourced from Inigo Quilez
             // https://www.youtube.com/watch?v=62-pRVZuS5c
-            float RectangleSDF(float2 pos, float2 halfDimensions)
+            float RectangleSDF(float2 pos, float2 halfDimensions)   // Returns signed distance to a rectangle
             {
                 return length(max(abs(pos) - halfDimensions, 0));
             }
@@ -82,7 +85,7 @@ Shader "Custom/HealthbarShader"
             // r.y = roundness boottom-right
             // r.z = roundness top-left
             // r.w = roundness bottom-left
-            float sdRoundBox( float2 p, float2 b, float4 r ) 
+            float sdRoundBox( float2 p, float2 b, float4 r )        // Returns signed distance to a rounded rectangle
             {
                 r.xy = (p.x>0.0)?r.xy : r.zw;
                 r.x  = (p.y>0.0)?r.x  : r.y;
@@ -119,10 +122,10 @@ Shader "Custom/HealthbarShader"
                 float range = InverseLerp(_LowerThreshold, _UpperThreshold, _Health);
                 float4 baseGradient = clamp(lerp(_EmptyColor, _FullColor, range), 0, 1);
                 float4 lerpedColor = lerp(baseGradient, float4(baseGradient + 0.8.xxxx), CubicPulse(IN.uv.y, 0.65, 0.25) * 0.5); // Creates highlight
-                //lerpedColor *= 1 - CubicPulse(IN.uv.y, 0.0,0.6) * 0.5; // Creates shadow
                 
-                // Transparency
-                if (_CrackStart > 0) 
+
+                // Health reduction smoothing
+                if (_CrackStart > 0)                    // _CrackStart gets set to the time at which damage was taken, starts off at 0
                 {
                     if (_Time.y - _CrackStart <= 1 / _HealthLerpSpeed) 
                     {
@@ -132,22 +135,27 @@ Shader "Custom/HealthbarShader"
                 }
                 else {_LerpedHealth = _Health;}
                 
+                
+                // Transparency
                 bool healthMask = (_LerpedHealth > IN.uv.x);
                 lerpedColor.xyz *= healthMask;
                 lerpedColor.a = clamp(healthMask + 0.5 * !healthMask, 0, 1);
 
+
                 // Outline
-                float2 sdfUVs = float2(IN.uv.x * 8, IN.uv.y) * 2 - float2(8, 1);
+                float2 sdfUVs = float2(IN.uv.x * 8, IN.uv.y) * 2 - float2(8, 1);                                        // X UVs mutltiplied by 8 because the scale of the quad is 8 times wider than it is high
                 float distanceFromRect = RectangleSDF(sdfUVs, float2(8 , 1) - _RoundingIntensity - _OutlineThickness);
-                bool outlineMask = (distanceFromRect - _RoundingIntensity) <= 0.0;
+                bool outlineMask = (distanceFromRect - _RoundingIntensity) <= 0.0;                                      // Substracting from an SDF rounds the shape given
                 lerpedColor.xyz *= outlineMask;
-                lerpedColor.a = clamp(lerpedColor.a + 0.5 * !outlineMask, 0, 1); // If a pixel is in the outline we make it opaque again
+                lerpedColor.a = clamp(lerpedColor.a + 0.5 * !outlineMask, 0, 1);                                        // If a pixel is in the outline we make it opaque again
+
 
                 // Clipping out the corners when rounded
                 float distanceFromRounding = sdRoundBox(sdfUVs, float2(8 , 1) - _OutlineThickness, float4(_RoundingIntensity.xxxx));
                 bool roundingMask = distanceFromRounding <= _OutlineThickness;
-                if (_RoundingIntensity) {lerpedColor.a = clamp(lerpedColor.a - lerpedColor.a * !roundingMask, 0, 1);} // We only want the rounding to apply if rounding intensity is above 0
+                if (_RoundingIntensity) {lerpedColor.a = clamp(lerpedColor.a - lerpedColor.a * !roundingMask, 0, 1);}   // We only want the rounding to apply if rounding intensity is above 0
                 
+
                 // Flash when low health
                 if (_Health <= _LowerThreshold) 
                 {
@@ -155,6 +163,7 @@ Shader "Custom/HealthbarShader"
                     lerpedColor.xyz *= flash;
                     lerpedColor.xyz += clamp(flash.xyz, 0, 1);
                 }
+
 
                 // Flash when Damaged
                 if (_CrackStart > 0) 
@@ -168,8 +177,6 @@ Shader "Custom/HealthbarShader"
 
 
                 return lerpedColor;
-                //return float4(CubicPulse(frac(_Time.y), 0.5, _FlashLength) * _FlashStrength.xxx, 1);
-                // return float4(distanceFromRect.xxx, 1);
             }
             ENDHLSL
         }
