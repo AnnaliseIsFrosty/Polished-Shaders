@@ -17,7 +17,7 @@ Shader "Custom/HealthbarShader"
         
         _CrackLength("Crack Length", Range(0, 1)) = 0.2
         _CrackStrength("Crack Strength", Range(0, 1)) = 0.5
-        _HealthLerpSpeed("Health Lerp Speed", Range(0.5, 5)) = 3
+        _HealthLerpSpeed("Health Lerp Speed", Range(1, 5)) = 3
         [HideInInspector] _CrackStart("Crack Start", Float) = 0
         [HideInInspector] _PreviousHealth("Previous Health", Float) = 1
         [HideInInspector] _LerpedHealth("Lerped Health", Float) = 1
