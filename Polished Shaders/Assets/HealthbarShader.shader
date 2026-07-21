@@ -14,7 +14,8 @@ Shader "Custom/HealthbarShader"
         _FlashStrength("Flash Strength", Range(0, 1)) = 0.5
         _CrackLength("Crack Length", Range(0, 1)) = 0.2
         _CrackStrength("Crack Strength", Range(0, 1)) = 0.5
-        _CrackStart("Crack Start", Float) = 0
+        [HideInInspector] _CrackStart("Crack Start", Float) = 0
+        [HideInInspector] _PreviousHealth("Previous Health", Float) = 1
     }
 
     SubShader
@@ -38,7 +39,7 @@ Shader "Custom/HealthbarShader"
             float _OutlineThickness, _RoundingIntensity;
             float4 _FlashColor;
             float _FlashLength, _FlashStrength;
-            float _CrackLength, _CrackStrength, _CrackStart;
+            float _CrackLength, _CrackStrength, _CrackStart, _PreviousHealth;
 
             // Code sourced from Freya Holmer
             //https://www.youtube.com/watch?v=kfM-yu0iQBk&t=6927s
@@ -55,6 +56,13 @@ Shader "Custom/HealthbarShader"
                 float output = x / flashLength;
                 output = 1 - output * output * (3 - 2 * output);
                 return output * (x <= flashLength);
+            }
+            
+            // Code sourced from Inigo Quilez
+            // https://iquilezles.org/articles/functions/
+            float PolynomialImpulse(float falloff, float x)
+            {
+                return 2 * sqrt(falloff) * x / (1 + falloff * x * x);    
             }
 
             // Code based off pseudo-code by Inigo Quilez
@@ -95,8 +103,6 @@ Shader "Custom/HealthbarShader"
             CBUFFER_START(UnityPerMaterial)
             CBUFFER_END
 
-
-
             Varyings vert(Attributes IN)
             {
                 Varyings OUT;
@@ -114,6 +120,9 @@ Shader "Custom/HealthbarShader"
                 //lerpedColor *= 1 - CubicPulse(IN.uv.y, 0.0,0.6) * 0.5; // Creates shadow
                 
                 // Transparency
+                // float lerpedHealth;
+                // if (abs(lerpedHealth - _Health) >= 0.2 ) {lerpedHealth = lerp(_PreviousHealth, _Health, PolynomialImpulse(1, frac(_Time.y)));}
+                
                 bool healthMask = (_Health > IN.uv.x);
                 lerpedColor.xyz *= healthMask;
                 lerpedColor.a = clamp(healthMask + 0.5 * !healthMask, 0, 1);
@@ -130,7 +139,7 @@ Shader "Custom/HealthbarShader"
                 bool roundingMask = distanceFromRounding <= _OutlineThickness;
                 if (_RoundingIntensity) {lerpedColor.a = clamp(lerpedColor.a - lerpedColor.a * !roundingMask, 0, 1);} // We only want the rounding to apply if rounding intensity is above 0
                 
-                // Flashing
+                // Flash when low health
                 if (_Health <= _LowerThreshold) 
                 {
                     float3 flash = lerp(lerpedColor.xyz, _FlashColor.xyz, CubicPulse(frac(_Time.y), 0.5, _FlashLength) * _FlashStrength); // Blends to flash color based off current intensity of the flash    
