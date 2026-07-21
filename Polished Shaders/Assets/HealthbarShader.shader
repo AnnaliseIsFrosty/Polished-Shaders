@@ -16,6 +16,7 @@ Shader "Custom/HealthbarShader"
         _CrackStrength("Crack Strength", Range(0, 1)) = 0.5
         [HideInInspector] _CrackStart("Crack Start", Float) = 0
         [HideInInspector] _PreviousHealth("Previous Health", Float) = 1
+        [HideInInspector] _LerpedHealth("Lerped Health", Float) = 1
     }
 
     SubShader
@@ -39,7 +40,7 @@ Shader "Custom/HealthbarShader"
             float _OutlineThickness, _RoundingIntensity;
             float4 _FlashColor;
             float _FlashLength, _FlashStrength;
-            float _CrackLength, _CrackStrength, _CrackStart, _PreviousHealth;
+            float _CrackLength, _CrackStrength, _CrackStart, _PreviousHealth, _LerpedHealth;
 
             // Code sourced from Freya Holmer
             //https://www.youtube.com/watch?v=kfM-yu0iQBk&t=6927s
@@ -120,10 +121,26 @@ Shader "Custom/HealthbarShader"
                 //lerpedColor *= 1 - CubicPulse(IN.uv.y, 0.0,0.6) * 0.5; // Creates shadow
                 
                 // Transparency
-                // float lerpedHealth;
-                // if (abs(lerpedHealth - _Health) >= 0.2 ) {lerpedHealth = lerp(_PreviousHealth, _Health, PolynomialImpulse(1, frac(_Time.y)));}
+                // if (_Health != _PreviousHealth) 
+                // {
+                //     //_LerpedHealth = _PreviousHealth;
+                //     if (abs(_LerpedHealth - _Health) >= 0.05 ) 
+                //     {
+                //         _LerpedHealth = clamp(lerp(_PreviousHealth, _Health, PolynomialImpulse(1, _Time.y)), _Health, _PreviousHealth);
+                //     }
+                // }
+
+                if (_CrackStart > 0) 
+                {
+                    if (_Time.y - _CrackStart <= 1) 
+                    {
+                        _LerpedHealth = lerp(_PreviousHealth, _Health, PolynomialImpulse(1, frac(_Time.y - _CrackStart)));
+                    }
+                    else {_LerpedHealth = _Health;}
+                }
                 
-                bool healthMask = (_Health > IN.uv.x);
+                
+                bool healthMask = (_LerpedHealth > IN.uv.x);
                 lerpedColor.xyz *= healthMask;
                 lerpedColor.a = clamp(healthMask + 0.5 * !healthMask, 0, 1);
 
